@@ -252,6 +252,7 @@ def phase_eval(seeds: list[int], max_eval: int) -> None:
 
 
 def main() -> None:
+    global RUNS
     parser = argparse.ArgumentParser()
     parser.add_argument("--phase", choices=["vocab", "detector", "ppo", "eval", "all"], default="all")
     parser.add_argument("--epochs", type=int, default=150)
@@ -262,7 +263,9 @@ def main() -> None:
     parser.add_argument("--ppo-seeds", default="42,43,44")
     parser.add_argument("--timesteps", type=int, default=25000)
     parser.add_argument("--max-eval", type=int, default=400, help="cap agent test size")
+    parser.add_argument("--runs-dir", type=Path, default=RUNS)
     args = parser.parse_args()
+    RUNS = args.runs_dir
     seeds = [int(x) for x in args.ppo_seeds.split(",") if x.strip()]
     RUNS.mkdir(parents=True, exist_ok=True)
     if args.phase in {"vocab", "all"}:

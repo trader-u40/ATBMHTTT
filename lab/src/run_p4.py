@@ -165,13 +165,18 @@ def phase_eval(seeds: list[int], algos: list[str], max_eval: int) -> None:
 
 
 def main() -> None:
+    global RUNS, RUNS_P3
     parser = argparse.ArgumentParser()
     parser.add_argument("--phase", choices=["train", "eval", "all"], default="all")
     parser.add_argument("--algo", default="ppo", help="ppo,dqn or ppo")
     parser.add_argument("--seeds", default="42,43,44")
     parser.add_argument("--timesteps", type=int, default=20000)
     parser.add_argument("--max-eval", type=int, default=400)
+    parser.add_argument("--p3-dir", type=Path, default=RUNS_P3)
+    parser.add_argument("--runs-dir", type=Path, default=RUNS)
     args = parser.parse_args()
+    RUNS, RUNS_P3 = args.runs_dir, args.p3_dir
+    RUNS.mkdir(parents=True, exist_ok=True)
     seeds = [int(x) for x in args.seeds.split(",") if x.strip()]
     algos = [a.strip() for a in args.algo.split(",") if a.strip()]
     if args.phase in {"train", "all"}:
