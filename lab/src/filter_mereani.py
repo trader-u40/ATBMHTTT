@@ -91,6 +91,10 @@ def main() -> None:
 
     out = pd.DataFrame(rows)
     args.output.parent.mkdir(parents=True, exist_ok=True)
+    # csv cannot write NUL; HTML parsers map it to U+FFFD anyway.
+    for col in ("Payloads", "decoded"):
+        if col in out:
+            out[col] = out[col].str.replace("\x00", "\ufffd", regex=False)
     out.to_csv(args.output, index=False)
 
     kept_mal = out[out["Class"] == "Malicious"] if len(out) else out
