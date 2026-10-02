@@ -1,0 +1,51 @@
+{
+  "seeds": [
+    {
+      "seed": 42,
+      "n": 400,
+      "n_escape": 12,
+      "er": 0.03,
+      "rr_e": 0.75,
+      "or_v": 0.49056603773584906,
+      "exec_alive_among_escape": 3
+    },
+    {
+      "seed": 43,
+      "n": 400,
+      "n_escape": 2,
+      "er": 0.005,
+      "rr_e": 1.0,
+      "or_v": 0.6666666666666666,
+      "exec_alive_among_escape": 0
+    },
+    {
+      "seed": 44,
+      "n": 400,
+      "n_escape": 19,
+      "er": 0.0475,
+      "rr_e": 0.368421052631579,
+      "or_v": 0.42677824267782427,
+      "exec_alive_among_escape": 12
+    },
+    {
+      "seed": 46,
+      "n": 400,
+      "n_escape": 2,
+      "er": 0.005,
+      "rr_e": 0.0,
+      "or_v": 0.5555555555555556,
+      "exec_alive_among_escape": 2
+    },
+    {
+      "seed": 47,
+      "n": 400,
+      "n_escape": 2,
+      "er": 0.005,
+      "rr_e": 0.0,
+      "or_v": 0.5555555555555556,
+      "exec_alive_among_escape": 2
+    }
+  ],
+  "er_mean": 0.0185,
+  "note": "P3: no oracle in PPO reward. High ER + high OR(V) = TH2 phenomenon."
+}

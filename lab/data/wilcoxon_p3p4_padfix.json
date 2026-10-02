@@ -1,0 +1,100 @@
+{
+  "metric": "ER on agent-test payloads",
+  "p3_source": "runs/p3_padfix/p3_eval.json",
+  "p4_source": "runs/p4_padfix/p4_eval.json",
+  "p3_timesteps": 20000,
+  "algo": "ppo",
+  "detector_fn_floor": {},
+  "per_seed": [
+    {
+      "seed": 42,
+      "p3_escape": 12,
+      "p3_er": 0.03,
+      "p3_er_ci95": [
+        0.017242849034032177,
+        0.05169903312966765
+      ],
+      "p4_escape": 19,
+      "p4_er": 0.0475,
+      "p4_er_ci95": [
+        0.030616832107668652,
+        0.07299210763504237
+      ]
+    },
+    {
+      "seed": 43,
+      "p3_escape": 2,
+      "p3_er": 0.005,
+      "p3_er_ci95": [
+        0.0013722242215711469,
+        0.018045289972112716
+      ],
+      "p4_escape": 4,
+      "p4_er": 0.01,
+      "p4_er_ci95": [
+        0.0038954207932788126,
+        0.02542696699440824
+      ]
+    },
+    {
+      "seed": 44,
+      "p3_escape": 19,
+      "p3_er": 0.0475,
+      "p3_er_ci95": [
+        0.030616832107668652,
+        0.07299210763504237
+      ],
+      "p4_escape": 4,
+      "p4_er": 0.01,
+      "p4_er_ci95": [
+        0.0038954207932788126,
+        0.02542696699440824
+      ]
+    },
+    {
+      "seed": 46,
+      "p3_escape": 2,
+      "p3_er": 0.005,
+      "p3_er_ci95": [
+        0.0013722242215711469,
+        0.018045289972112716
+      ],
+      "p4_escape": 2,
+      "p4_er": 0.005,
+      "p4_er_ci95": [
+        0.0013722242215711469,
+        0.018045289972112716
+      ]
+    },
+    {
+      "seed": 47,
+      "p3_escape": 2,
+      "p3_er": 0.005,
+      "p3_er_ci95": [
+        0.0013722242215711469,
+        0.018045289972112716
+      ],
+      "p4_escape": 3,
+      "p4_er": 0.0075,
+      "p4_er_ci95": [
+        0.0025538429629852373,
+        0.02181610802770022
+      ]
+    }
+  ],
+  "diffs_p3_minus_p4": [
+    -0.0175,
+    -0.005,
+    0.0375,
+    0.0,
+    -0.0024999999999999996
+  ],
+  "wilcoxon": {
+    "n_nonzero": 4,
+    "w_plus": 4.0,
+    "w_minus": 6.0,
+    "p_two_sided_exact": 0.875,
+    "min_achievable_p": 0.125
+  },
+  "reading": "Descriptive only. With few seeds the exact test cannot reach 0.05 (see min_achievable_p); compare ER against detector_fn_floor and the per-seed Wilson CIs."
+}

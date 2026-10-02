@@ -66,7 +66,9 @@ def main() -> None:
 
     p3 = json.loads(args.p3.read_text(encoding="utf-8"))
     p4 = json.loads(args.p4.read_text(encoding="utf-8"))
-    p3_rows = {r["seed"]: r for r in p3["ppo"] if r.get("timesteps") == args.timesteps}
+    p3_rows = {
+        r["seed"]: r for r in p3.get("ppo", p3.get("seeds", [])) if r.get("timesteps", args.timesteps) == args.timesteps
+    }
     p4_rows = {r["seed"]: r for r in p4["p4"] if r.get("algo", "ppo") == args.algo}
     seeds = sorted(set(p3_rows) & set(p4_rows))
     if not seeds:
