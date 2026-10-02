@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { createInterface } from "node:readline";
-import { evaluateSync } from "./eval_xss.mjs";
+import { evaluate } from "./eval_xss.mjs";
 
 function parseArgs(argv) {
   const out = { payload: null };
@@ -25,7 +25,7 @@ async function runStdin() {
     const id = msg.id ?? fallbackId++;
     let result;
     try {
-      result = evaluateSync(msg.payload ?? "", {
+      result = await evaluate(msg.payload ?? "", {
         fullDocument: Boolean(msg.document || msg.fullDocument),
       });
     } catch (err) {
@@ -41,7 +41,7 @@ async function runStdin() {
 
 const args = parseArgs(process.argv);
 if (args.payload != null) {
-  process.stdout.write(JSON.stringify(evaluateSync(args.payload)) + "\n");
+  process.stdout.write(JSON.stringify(await evaluate(args.payload)) + "\n");
 } else {
   await runStdin();
 }

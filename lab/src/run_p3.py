@@ -74,7 +74,7 @@ def phase_detector(epochs: int, patience: int, batch_size: int, lr: float, seed:
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_ds, batch_size=64)
     model = LSTMDetector(len(vocab), embedding_dim=8)
-    none_id = {tok: i for i, tok in enumerate(vocab)}["None"]
+    pad_id = {tok: i for i, tok in enumerate(vocab)}["<pad>"]
     # Paper uses SGD 1e-3; on this split it stuck at 50%. Adam is a documented deviation.
     opt = torch.optim.Adam(model.parameters(), lr=lr)
     crit = nn.BCELoss()
@@ -86,13 +86,13 @@ def phase_detector(epochs: int, patience: int, batch_size: int, lr: float, seed:
         total = 0.0
         for xb, yb in train_loader:
             opt.zero_grad()
-            loss = crit(model(xb, pad_id=none_id), yb)
+            loss = crit(model(xb, pad_id=pad_id), yb)
             loss.backward()
             nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             opt.step()
             total += float(loss.item()) * len(xb)
         train_loss = total / len(train_ds)
-        val_metrics = _eval_loader(model, val_loader, pad_id=0)
+        val_metrics = _eval_loader(model, val_loader, pad_id=pad_id)
         history.append({"epoch": epoch, "train_loss": train_loss, **val_metrics})
         print(
             f"epoch {epoch:03d} train_loss={train_loss:.4f} "
@@ -109,7 +109,7 @@ def phase_detector(epochs: int, patience: int, batch_size: int, lr: float, seed:
                 print("early_stop", epoch)
                 break
     model.load_state_dict(torch.load(RUNS / "lstm.pt"))
-    test_metrics = _eval_loader(model, DataLoader(test_ds, batch_size=64), pad_id=0)
+    test_metrics = _eval_loader(model, DataLoader(test_ds, batch_size=64), pad_id=pad_id)
     report = {
         "vocab_size": len(vocab),
         "embedding_dim": 8,

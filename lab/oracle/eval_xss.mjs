@@ -1,4 +1,10 @@
-import { JSDOM, VirtualConsole } from "jsdom";
+import { JSDOM, ResourceLoader, VirtualConsole } from "jsdom";
+
+class OfflineLoader extends ResourceLoader {
+  fetch() {
+    return null;
+  }
+}
 
 function wrap(payload) {
   return `<!DOCTYPE html><html><head><title>lab</title></head><body>${payload}</body></html>`;
@@ -10,7 +16,7 @@ function runJavascriptUrl(window, value) {
   const match = trimmed.match(/^javascript:(.*)$/i);
   if (!match) return;
   try {
-    window.eval(match[1]);
+    (window.__rawEval || window.eval)(match[1]);
   } catch {
     /* payload threw — still counted if a hook already fired */
   }
@@ -34,6 +40,19 @@ function triggerLegacyHandlers(window) {
       /* ignore */
     }
   }
+  for (const el of doc.querySelectorAll("*")) {
+    for (const attr of Array.from(el.attributes)) {
+      const name = attr.name.toLowerCase();
+      if (!name.startsWith("on") || name.length < 3) continue;
+      const type = name.slice(2);
+      if (type === "load" || (type === "error" && el.tagName === "IMG")) continue;
+      try {
+        el.dispatchEvent(new window.Event(type, { bubbles: false }));
+      } catch {
+        /* ignore */
+      }
+    }
+  }
 }
 
 function installHooks(window, hits) {
@@ -43,7 +62,7 @@ function installHooks(window, hits) {
       extra: extra == null ? null : String(extra).slice(0, 240),
     });
     try {
-      window.__XSS_ORACLE = true;
+      if (SINKS.has(name)) window.__XSS_ORACLE = true;
     } catch {
       /* ignore */
     }
@@ -62,6 +81,7 @@ function installHooks(window, hits) {
 
   try {
     const evalFn = window.eval.bind(window);
+    Object.defineProperty(window, "__rawEval", { value: evalFn });
     window.eval = (code) => {
       mark("eval", code);
       return evalFn(code);
@@ -113,7 +133,22 @@ function installHooks(window, hits) {
   }
 }
 
-export function evaluateSync(payload, options = {}) {
+// eval/Function are recorded for tracing but are not proof of XSS: JSDOM itself
+// compiles every inline on* handler through window.Function.
+const SINKS = new Set(["alert", "confirm", "prompt", "print", "title", "cookie"]);
+
+function waitForLoad(window, ms) {
+  return new Promise((resolve) => {
+    if (window.document.readyState === "complete") return resolve();
+    const timer = setTimeout(resolve, ms);
+    window.addEventListener("load", () => {
+      clearTimeout(timer);
+      setTimeout(resolve, 0);
+    });
+  });
+}
+
+export async function evaluate(payload, options = {}) {
   const hits = [];
   const virtualConsole = new VirtualConsole();
   virtualConsole.on("jsdomError", () => {});
@@ -122,13 +157,14 @@ export function evaluateSync(payload, options = {}) {
   const html = options.fullDocument
     ? String(payload ?? "")
     : wrap(String(payload ?? ""));
+  const executed = () => hits.some((h) => SINKS.has(h.name));
 
   let dom;
   try {
     dom = new JSDOM(html, {
       url: "http://lab.local/page",
       runScripts: "dangerously",
-      resources: "usable",
+      resources: new OfflineLoader(),
       pretendToBeVisual: true,
       virtualConsole,
       beforeParse(window) {
@@ -136,18 +172,13 @@ export function evaluateSync(payload, options = {}) {
       },
     });
   } catch (err) {
-    return {
-      executed: hits.length > 0,
-      hooks: hits,
-      error: String(err).slice(0, 300),
-    };
+    return { executed: executed(), hooks: hits, error: String(err).slice(0, 300) };
   }
 
   try {
+    await waitForLoad(dom.window, options.loadTimeoutMs ?? 500);
     triggerLegacyHandlers(dom.window);
-    const executed =
-      hits.length > 0 || Boolean(dom.window.__XSS_ORACLE);
-    return { executed, hooks: hits };
+    return { executed: executed(), hooks: hits };
   } finally {
     try {
       dom.window.close();

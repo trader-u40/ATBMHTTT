@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import select
 import subprocess
 import sys
 from dataclasses import dataclass, field
@@ -58,8 +59,9 @@ class OracleResult:
 
 
 class JsdomOracle:
-    def __init__(self, recycle_every: int = 800) -> None:
+    def __init__(self, recycle_every: int = 800, timeout_s: float = 5.0) -> None:
         self._proc: subprocess.Popen[str] | None = None
+        self._timeout_s = timeout_s
         self._calls = 0
         self._recycle_every = recycle_every
         self._err_path = LAB_ROOT / "data" / "jsdom_oracle.stderr.log"
@@ -68,7 +70,8 @@ class JsdomOracle:
         if self._proc is not None:
             return
         self._err_path.parent.mkdir(parents=True, exist_ok=True)
-        err = open(self._err_path, "a", encoding="utf-8")
+        self._err = open(self._err_path, "a", encoding="utf-8")
+        err = self._err
         self._proc = subprocess.Popen(
             ["node", str(ORACLE_JS)],
             stdin=subprocess.PIPE,
@@ -88,6 +91,7 @@ class JsdomOracle:
             if self._proc.stdout:
                 self._proc.stdout.close()
             self._proc.wait(timeout=5)
+            self._err.close()
         except Exception:
             self._proc.kill()
             try:
@@ -126,6 +130,11 @@ class JsdomOracle:
             try:
                 self._proc.stdin.write(line + "\n")
                 self._proc.stdin.flush()
+                ready, _, _ = select.select([self._proc.stdout], [], [], self._timeout_s)
+                if not ready:
+                    self._proc.kill()
+                    self.close()
+                    return {"executed": False, "hooks": [], "timeout": True}
                 raw = self._proc.stdout.readline()
             except BrokenPipeError as err:
                 last_err = err
